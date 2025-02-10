@@ -127,7 +127,7 @@ DeepSeek-V3基本的结构特点是：多头潜在注意力（Multi-head Attenti
 ##### 基础结构
 DeepSeel-V3的基础结构仍在Transformer结构内。为了高效推理和经济训练采用了V2中的MLA和DeepSeekMoE。与V2相比为DeepSeek-V3的DeepSeekMoE新增了无辅助损失的负载均衡（auxiliary-loss-free load balancing）策略，减轻由确保负载平衡的努力引起的性能下降。
 ![img](https://github.com/Damon-Chang/Embodied-Intelligence-Note/blob/main/figures/%E6%88%AA%E5%B1%8F2025-02-10%2014.19.30.png)
-![alt text](<截屏2025-02-10 14.19.30.png>)
+
 
 
 ## DeepSeek R1 <a href="#deekseek系列">🔝</a>
