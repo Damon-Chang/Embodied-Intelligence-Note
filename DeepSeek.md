@@ -98,7 +98,7 @@ objective），以实现更好的性能
 - 将DeepSeek-V3与人类喜好对齐，并进一步释放其潜力。
 
 在后训练阶段，从DeepSeek-R1系列模型中提取推理能力，同时小心保持模型精度和生成长度之间的平衡。
-![alt text](<[截屏2025-02-10 12.32.16.png](https://github.com/Damon-Chang/Embodied-Intelligence-Note/blob/main/figures/%E6%88%AA%E5%B1%8F2025-02-10%2012.32.16.png)>)
+![alt text](https://github.com/Damon-Chang/Embodied-Intelligence-Note/blob/main/figures/%E6%88%AA%E5%B1%8F2025-02-10%2012.32.16.png)
 ![alt text](<截屏2025-02-10 12.32.16.png>)
 
 在预训练阶段，在每万亿个令牌上训练 DeepSeek-V3 只需要 180KH800 GPU 小时，即在我们拥有 2048 个 H800 GPU 的集群上训练 3.7 天。因此，我们的预训练阶段在**不到两个月**的时间内完成，花费 2664KGPU 小时。加上上下文长度扩展的 119KGPU 小时和训练后的 5KGPU 小时，DeepSeek-V3 的完整训练仅花费 2.788MGPU 小时。假设 H800 GPU 的租赁价格为每 GPU 小时 2 美元，我们的总训练成本仅为 557.60 万美元。请注意，上述成本仅包括 DeepSeek-V3 的官方训练，不包括与架构、算法或数据的先前研究和消融实验相关的成本。
@@ -268,11 +268,11 @@ DeepSeek-V3的训练由**HAI-LLM**框架支持，这是一个由我们的工程�
 对于DeepSeek-V3，跨节点专家并行引入的通信开销导致约1:1的低效computation-to-communication比。为了应对这一挑战，我们设计了一种名为DualPipe的创新流水线并行算法，它不仅通过有效重叠前向和后向计算-通信阶段来加速模型训练，还减少了流水线气泡。
 DualPipe的核心思想是将计算和通信重叠在一对单独的向前和向后块中。具体来说，我们将每个块分为**四个组成部分**：注意力、所有对所有调度、MLP和所有对所有组合（attention, all-to-all dispatch, MLP, and all-to-all combine）。特别是，对于向后块，注意力和MLP进一步分为**两部分**，向后用于输入，向后用于权重（backward for input and backward for weights），如ZeroBubble（Qi et al.，2023b）。此外，我们还有一个PP通信组件，如下图所示，对于一对向前和向后的块，我们重新排列这些组件，并手动调整专用于通信与计算的GPU SM的比例。
 
-![一对单独的向前和向后块的重叠策略（转换器块的边界不对齐）。橙色表示向前，绿色表示“向后输入”，蓝色表示“向后权重”，紫色表示PP通信，红色表示障碍。所有对所有和PP通信都可以完全隐藏。](<[截屏2025-02-13 19.58.18.png](https://github.com/Damon-Chang/Embodied-Intelligence-Note/blob/main/figures/%E6%88%AA%E5%B1%8F2025-02-13%2019.58.18.png)>)
+![一对单独的向前和向后块的重叠策略（转换器块的边界不对齐）。橙色表示向前，绿色表示“向后输入”，蓝色表示“向后权重”，紫色表示PP通信，红色表示障碍。所有对所有和PP通信都可以完全隐藏。](https://github.com/Damon-Chang/Embodied-Intelligence-Note/blob/main/figures/%E6%88%AA%E5%B1%8F2025-02-13%2019.58.18.png)
 ![一对单独的向前和向后块的重叠策略（转换器块的边界不对齐）。橙色表示向前，绿色表示“向后输入”，蓝色表示“向后权重”，紫色表示PP通信，红色表示障碍。所有对所有和PP通信都可以完全隐藏。](<截屏2025-02-13 19.58.18.png>)
 
 在这种重叠策略中，我们可以确保all-to-all和PP通信在执行期间都可以完全隐藏。给定有效的重叠策略，完整的DualPipe调度如下图所示。
-![示例DualPipe调度用于两个方向的8个PP等级和20个微批次。反向方向的微批次与正向方向的微批次是对称的，因此为了说明简单起见，我们省略了它们的批次ID。由共享黑边包围的两个单元相互重叠计算和通信。](<[截屏2025-02-13 20.26.30.png](https://github.com/Damon-Chang/Embodied-Intelligence-Note/blob/main/figures/%E6%88%AA%E5%B1%8F2025-02-13%2020.26.30.png)>)
+![示例DualPipe调度用于两个方向的8个PP等级和20个微批次。反向方向的微批次与正向方向的微批次是对称的，因此为了说明简单起见，我们省略了它们的批次ID。由共享黑边包围的两个单元相互重叠计算和通信。](https://github.com/Damon-Chang/Embodied-Intelligence-Note/blob/main/figures/%E6%88%AA%E5%B1%8F2025-02-13%2020.26.30.png)
 ![示例DualPipe调度用于两个方向的8个PP等级和20个微批次。反向方向的微批次与正向方向的微批次是对称的，因此为了说明简单起见，我们省略了它们的批次ID。由共享黑边包围的两个单元相互重叠计算和通信。](<截屏2025-02-13 20.26.30.png>)
 它采用双向流水线调度，从流水线两端同时输送微批次，并且很大一部分通信可以完全重叠。这种重叠还确保了，随着模型进一步扩展，只要我们保持恒定的computation-to-communication比，我们仍然可以跨节点雇用细粒度的专家，同时实现近乎零的所有对所有通信开销。
 此外，即使在没有沉重通信负担的更一般场景中，DualPipe 仍然展现出效率优势。在表下表中，我们总结了不同并行处理（PP）方法的流水线气泡和内存使用情况。如下表所示，与 ZB1P（Qi 等人，2023b）和 1F1B（Harlap 等人，2018）相比，DualPipe 显著减少了流水线气泡，同时仅将峰值激活内存增加了$\frac{1}{pp}$倍。
