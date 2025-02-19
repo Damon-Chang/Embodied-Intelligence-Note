@@ -137,9 +137,9 @@ DeepSeel-V3的基础结构仍在Transformer结构内。为了高效推理和经�
 
 ###### 1.1.1 Multi-Head Latend Attention，MLA
 
-对于注意力，DeepSeek-V3采用了MLA架构。$ d $表示嵌入维度，$ n_ h $表示注意力头的数量，$d_h$表示每个头的维度，$h_t\in \mathbb{R}^d$表示给定注意力层第个标记的注意力输入。MLA的核心是**对注意力键和值进行低秩联合压缩，以减少推理过程中的Key-Value（KV）缓存**：
+对于注意力，DeepSeek-V3采用了MLA架构。 $ d $ 表示嵌入维度， $ n_h $ 表示注意力头的数量， $d_h$ 表示每个头的维度，$h_t\in \mathbb{R}^d$表示给定注意力层第个标记的注意力输入。MLA的核心是**对注意力键和值进行低秩联合压缩，以减少推理过程中的Key-Value（KV）缓存**：
 
-$$
+$$ 
 \begin{align*}
 \boxed{\mathbf{c}_t^{KV}} &= W^{DKV}\mathbf{h}_t, \\
 [\mathbf{k}_ {t,1}^{C}; \mathbf{k}_{t,2}^{C};\cdots;\mathbf{k}_{t,n_h}^{C}] &= \mathbf{k}_t^{C} = W^{UK}\mathbf{c}_t^{KV}, \\
@@ -147,9 +147,9 @@ $$
 \mathbf{k}_{t,i} &= [\mathbf{k}_{t,i}^{C};\mathbf{k}_t^{R}], \\
 [\mathbf{v}_{t,1}^{C};\mathbf{v}_{t,2}^{C};\cdots;\mathbf{v}_{t,n_h}^{C}] &= \mathbf{v}_t^{C} = W^{UV}\mathbf{c}_t^{KV},
 \end{align*}
-$$
+ $$
 
-$$
+$$ 
 \begin{align*}
 \mathbf{c}t^{KV} &= W^{DKV}\mathbf{h}t, \
 [\mathbf{k}{t,1}^{C}; \mathbf{k}{t,2}^{C};\cdots;\mathbf{k}_{t,n_h}^{C}] &= \mathbf{k}t^{C} = W^{UK}\mathbf{c}t^{KV}, \
@@ -157,9 +157,9 @@ $$
 \mathbf{k}{t,i} &= [\mathbf{k}{t,i}^{C};\mathbf{k}t^{R}], \
 [\mathbf{v}{t,1}^{C};\mathbf{v}{t,2}^{C};\cdots;\mathbf{v}{t,n_h}^{C}] &= \mathbf{v}_t^{C} = W^{UV}\mathbf{c}_t^{KV},
 \end{align*}
-$$
+ $$
 
-$c_t^{KV}\in \mathbb{R}^{d_c}$是为键和值准备的压缩潜在向量，$d_c(\ll d_h n_h)$表示KV压缩维度；$W^{DKV}\in \mathbb{R}^{d_c\times d}$表示下投影矩阵;$W^{UK},W^{UV}\in \mathbb{R}^{d_hn_h\times d_c}$分别表示键和值的上投影矩阵；$W^{KR}\in \mathbb{R}^{d_h^R\times d}$表示用于产生携带旋转位置潜入（ Rotary Positional Embedding，RoPE）解藕键的旋转矩阵，$RoPE(\cdot)$表示应用RoPE矩阵的操作；$[\cdot;\cdot]$表示拼接。
+$ c_t^{KV}\in \mathbb{R}^{d_c} $ 是为键和值准备的压缩潜在向量，$d_c(\ll d_h n_h)$表示KV压缩维度；$W^{DKV}\in \mathbb{R}^{d_c\times d}$表示下投影矩阵;$W^{UK},W^{UV}\in \mathbb{R}^{d_hn_h\times d_c}$分别表示键和值的上投影矩阵；$W^{KR}\in \mathbb{R}^{d_h^R\times d}$表示用于产生携带旋转位置潜入（ Rotary Positional Embedding，RoPE）解藕键的旋转矩阵，$RoPE(\cdot)$表示应用RoPE矩阵的操作；$[\cdot;\cdot]$表示拼接。
 
 > [!NOTE]
 > 对于MLA，只有框住的向量（$c_t^{KV},k_t^R$）在迭代时需要缓存，这使得MLA在保持和标准的多头注意力（Multi-Head Attention，MHA）相同表现的同时极大地降低了KV缓存。
