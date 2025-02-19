@@ -142,12 +142,20 @@ DeepSeel-V3的基础结构仍在Transformer结构内。为了高效推理和经�
 $$
 \begin{align*}
 \boxed{\mathbf{c}_t^{KV}} &= W^{DKV}\mathbf{h}_t, \\
-[\mathbf{k}_{t,1}^{C};\mathbf{k}_{t,2}^{C};\cdots;\mathbf{k}_{t,n_h}^{C}] &= \mathbf{k}_t^{C} = W^{UK}\mathbf{c}_t^{KV}, \\
-\boxed{\mathbf{k}_t^{R}} &= \text{RoPE}(W^{KR}\mathbf{h}_t), \\
+[\mathbf{k}_ {t,1}^{C}; \mathbf{k}_{t,2}^{C};\cdots;\mathbf{k}_{t,n_h}^{C}] &= \mathbf{k}_t^{C} = W^{UK}\mathbf{c}_t^{KV}, \\
+\boxed{\mathbf{k}_ t^{R}} &= \text{RoPE}(W^{KR}\mathbf{h}_ t), \\ 
 \mathbf{k}_{t,i} &= [\mathbf{k}_{t,i}^{C};\mathbf{k}_t^{R}], \\
 [\mathbf{v}_{t,1}^{C};\mathbf{v}_{t,2}^{C};\cdots;\mathbf{v}_{t,n_h}^{C}] &= \mathbf{v}_t^{C} = W^{UV}\mathbf{c}_t^{KV},
 \end{align*}
 $$
+
+\begin{align*}
+\mathbf{c}t^{KV} &= W^{DKV}\mathbf{h}t, \
+[\mathbf{k}{t,1}^{C}; \mathbf{k}{t,2}^{C};\cdots;\mathbf{k}_{t,n_h}^{C}] &= \mathbf{k}t^{C} = W^{UK}\mathbf{c}t^{KV}, \
+\mathbf{k}t^{R} &= \text{RoPE}(W^{KR}\mathbf{h}t), \
+\mathbf{k}{t,i} &= [\mathbf{k}{t,i}^{C};\mathbf{k}t^{R}], \
+[\mathbf{v}{t,1}^{C};\mathbf{v}{t,2}^{C};\cdots;\mathbf{v}{t,n_h}^{C}] &= \mathbf{v}_t^{C} = W^{UV}\mathbf{c}_t^{KV},
+\end{align*}
 
 $c_t^{KV}\in \mathbb{R}^{d_c}$是为键和值准备的压缩潜在向量，$d_c(\ll d_h n_h)$表示KV压缩维度；$W^{DKV}\in \mathbb{R}^{d_c\times d}$表示下投影矩阵;$W^{UK},W^{UV}\in \mathbb{R}^{d_hn_h\times d_c}$分别表示键和值的上投影矩阵；$W^{KR}\in \mathbb{R}^{d_h^R\times d}$表示用于产生携带旋转位置潜入（ Rotary Positional Embedding，RoPE）解藕键的旋转矩阵，$RoPE(\cdot)$表示应用RoPE矩阵的操作；$[\cdot;\cdot]$表示拼接。
 
