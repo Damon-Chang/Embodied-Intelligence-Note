@@ -137,7 +137,7 @@ DeepSeel-V3的基础结构仍在Transformer结构内。为了高效推理和经�
 
 ###### 1.1.1 Multi-Head Latend Attention，MLA
 
-对于注意力，DeepSeek-V3采用了MLA架构。$d$让表示嵌入维度，$n_h$表示注意力头的数量，$d_h$表示每个头的维度，$h_t\in \mathbb{R}^d$表示给定注意力层第个标记的注意力输入。MLA的核心是**对注意力键和值进行低秩联合压缩，以减少推理过程中的Key-Value（KV）缓存**：
+对于注意力，DeepSeek-V3采用了MLA架构。$ d $表示嵌入维度，$ n_ h $表示注意力头的数量，$d_h$表示每个头的维度，$h_t\in \mathbb{R}^d$表示给定注意力层第个标记的注意力输入。MLA的核心是**对注意力键和值进行低秩联合压缩，以减少推理过程中的Key-Value（KV）缓存**：
 
 $$
 \begin{align*}
