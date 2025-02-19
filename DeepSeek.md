@@ -98,7 +98,7 @@ objective），以实现更好的性能
 - 将DeepSeek-V3与人类喜好对齐，并进一步释放其潜力。
 
 在后训练阶段，从DeepSeek-R1系列模型中提取推理能力，同时小心保持模型精度和生成长度之间的平衡。
-
+![alt text](<[截屏2025-02-10 12.32.16.png](https://github.com/Damon-Chang/Embodied-Intelligence-Note/blob/main/figures/%E6%88%AA%E5%B1%8F2025-02-10%2012.32.16.png)>)
 ![alt text](<截屏2025-02-10 12.32.16.png>)
 
 在预训练阶段，在每万亿个令牌上训练 DeepSeek-V3 只需要 180KH800 GPU 小时，即在我们拥有 2048 个 H800 GPU 的集群上训练 3.7 天。因此，我们的预训练阶段在**不到两个月**的时间内完成，花费 2664KGPU 小时。加上上下文长度扩展的 119KGPU 小时和训练后的 5KGPU 小时，DeepSeek-V3 的完整训练仅花费 2.788MGPU 小时。假设 H800 GPU 的租赁价格为每 GPU 小时 2 美元，我们的总训练成本仅为 557.60 万美元。请注意，上述成本仅包括 DeepSeek-V3 的官方训练，不包括与架构、算法或数据的先前研究和消融实验相关的成本。
@@ -149,16 +149,6 @@ $$
 \end{align*}
  $$
 
-$$ 
-\begin{align*}
-\mathbf{c}t^{KV} &= W^{DKV}\mathbf{h}t, \
-[\mathbf{k}{t,1}^{C}; \mathbf{k}{t,2}^{C};\cdots;\mathbf{k}_{t,n_h}^{C}] &= \mathbf{k}t^{C} = W^{UK}\mathbf{c}t^{KV}, \
-\mathbf{k}t^{R} &= \text{RoPE}(W^{KR}\mathbf{h}t), \
-\mathbf{k}{t,i} &= [\mathbf{k}{t,i}^{C};\mathbf{k}t^{R}], \
-[\mathbf{v}{t,1}^{C};\mathbf{v}{t,2}^{C};\cdots;\mathbf{v}{t,n_h}^{C}] &= \mathbf{v}_t^{C} = W^{UV}\mathbf{c}_t^{KV},
-\end{align*}
- $$
-
 $ c_t^{KV}\in \mathbb{R}^{d_c} $ 是为键和值准备的压缩潜在向量，$d_c(\ll d_h n_h)$表示KV压缩维度；$W^{DKV}\in \mathbb{R}^{d_c\times d}$表示下投影矩阵;$W^{UK},W^{UV}\in \mathbb{R}^{d_hn_h\times d_c}$分别表示键和值的上投影矩阵；$W^{KR}\in \mathbb{R}^{d_h^R\times d}$表示用于产生携带旋转位置潜入（ Rotary Positional Embedding，RoPE）解藕键的旋转矩阵，$RoPE(\cdot)$表示应用RoPE矩阵的操作；$[\cdot;\cdot]$表示拼接。
 
 > [!NOTE]
@@ -179,24 +169,24 @@ $$
 最后，注意力查询（$q_{t,i}$），键（$k_{t,i}$），值（$v_{t,i}$）结合产出最终的注意力输出$u_t$:
 $$
 \begin{align*}
-\mathbf{o}_{t, i} &=\sum_{j = 1}^{t} \text{Softmax}_{j}\left(\frac{\mathbf{q}_{t, i}^{T} \mathbf{k}_{j, i}}{\sqrt{d_{h}+d_{h}^{R}}}\right) \mathbf{v}_{j, i}^{C}\\
-\mathbf{u}_{t} &=W^{O}\left[\mathbf{o}_{t, 1} ; \mathbf{o}_{t, 2} ; \ldots ; \mathbf{o}_{t, n_{h}}\right]
+\mathbf{o}_ {t, i} &=\sum_{j = 1}^{t} \text{Softmax}_ {j}\left(\frac{\mathbf{q}_ {t, i}^{T} \mathbf{k}_ {j, i}}{\sqrt{d_{h}+d_{h}^{R}}}\right) \mathbf{v}_ {j, i}^{C}\\
+\mathbf{u}_ {t} &=W^{O}\[ \mathbf{o}_ {t, 1} ; \mathbf{o}_ {t, 2} ; \ldots ; \mathbf{o}_ {t,n_ {h}} \]
 \end{align*}
 $$
-其中$W^O\in\mathbb{R}^{d\times d_hn_h}$表示输出投影矩阵。
+其中$W^O\in\mathbb{R}^{d\times d_ h n_ h}$表示输出投影矩阵。
 
 ###### 1.1.2 无辅助损失负载均衡的DeepSeekMoE
 
 **DeepSeekMoE的基本结构**。V3使用DeepSeekMoE作为前馈神经网络（Feed-Forward Networks，FNNs）。与传统MoE相比，DeepSeekMoE结构使用更细粒度（finer-grained）的专家，并将一些专家隔离为共享专家。令$u_t$表示FFN第t个输入，FFN输出$h_t'$为：
  $$
 \begin{align*}
-\mathbf{h}_{t}^{\prime}&=\mathbf{u}_{t}+\sum_{i = 1}^{N_{s}} \mathrm{FFN}_{i}^{(s)}\left(\mathbf{u}_{t}\right)+\sum_{i = 1}^{N_{r}} g_{i, t} \mathrm{FFN}_{i}^{(r)}\left(\mathbf{u}_{t}\right),\\
+\mathbf{h}_ {t}^{\prime}&=\mathbf{u}_ {t}+\sum_ {i = 1}^{N_ {s}} \mathrm{FFN}_ {i}^{(s)}\left(\mathbf{u}_ {t}\right)+\sum_{i = 1}^{N_{r}} g_{i, t} \mathrm{FFN}_ {i}^{(r)}\left(\mathbf{u}_ {t}\right),\\
 g_{i, t}&=\frac{g_{i, t}^{\prime}}{\sum_{j = 1}^{N_{r}} g_{j, t}^{\prime}},\\
 g_{i, t}^{\prime}&= \begin{cases}s_{i, t}, & s_{i, t} \in \mathrm{Topk}(\{s_{j, t}|1 \leqslant j \leqslant N_{r}\}, K_{r}), \\ 0, & \text { otherwise, }\end{cases}\\
-s_{i, t}&=\mathrm{Sigmoid}\left(\mathbf{u}_{t}^{T} \mathbf{e}_{i}\right),
+s_{i, t}&=\mathrm{Sigmoid}\left(\mathbf{u}_ {t}^{T} \mathbf{e}_ {i}\right),
 \end{align*}
 $$
-其中$N_s,N_r$分别表示共享专家和路由专家的数量；$FFN_i^{(s)}(\cdot),FFN_i^{(r)}(\cdot)$分别表示第i个共享专家和路由专家。$K_r$表示激活的路由专家数量；$g_{i,t}$表示第i歌专家的门控值；$s_{i,t}$表示词元到专家（token-to-expert）的亲和度（affinity）；$e_i$表示第i个路由专家的质心向量；$TopK(\cdot,K)$表示第t个词元和所有路由专家计算的亲和力分数中最高分的集合。与DeepSeek-V2略有不同，DeepSeek-V3使用sigmoid函数来计算亲和力分数，并在所有选定的亲和力分数中应用规范化来生成门控值。
+其中$N_s,N_r$分别表示共享专家和路由专家的数量；$FFN_ i^ {(s)}(\cdot),FFN_ i^ {(r)}(\cdot)$分别表示第i个共享专家和路由专家。$K_ r$表示激活的路由专家数量；$g_{i,t}$表示第i歌专家的门控值；$s_{i,t}$表示词元到专家（token-to-expert）的亲和度（affinity）；$e_i$表示第i个路由专家的质心向量；$TopK(\cdot,K)$表示第t个词元和所有路由专家计算的亲和力分数中最高分的集合。与DeepSeek-V2略有不同，DeepSeek-V3使用sigmoid函数来计算亲和力分数，并在所有选定的亲和力分数中应用规范化来生成门控值。
 
 **无辅助损失负载均衡**。对于MoE模型，不平衡的专家加载将导致路由崩溃并降低专家并行性场景中的计算效率。常规解决方案通常依赖辅助损失来避免不平衡负载。但太大的辅助损失会影响模型性能。为了在负载平衡和模型性能之间实现更好的权衡，V3开创了一种无辅助损失的负载均衡策略。具体来说，为每个专家引进了一个偏执项$b_i$，并将其添加到相应的亲和力分数$s_{i,t}$中，以确定top-K路由。
 
@@ -214,7 +204,7 @@ $$
 
 $$
 \begin{align*}
-\mathcal{L}_{\text{Bal}}&=\alpha\sum_{i = 1}^{N_r}f_iP_i,\\
+\mathcal{L}_ {\text{Bal}}&=\alpha\sum_{i = 1}^{N_r}f_iP_i,\\
 f_i&=\frac{N_r}{K_rT}\sum_{t = 1}^{T}\mathbb{1}(s_{i,t}\in\mathrm{Topk}(\{s_{j,t}|1\leqslant j\leqslant N_r\},K_r)),\\
 s_{i,t}'&=\frac{s_{i,t}}{\sum_{j = 1}^{N_r}s_{j,t}},\\
 P_i&=\frac{1}{T}\sum_{t = 1}^{T}s_{i,t}'
@@ -235,11 +225,11 @@ Multi-Token Prediction。受Gloeckle等人（2024）的启发，V3研究并为De
 
 **MTP模块**。具体来说，MTP实现使用D个序列模块预测D个额外的词元。第k个MTP模块包括一个共享的的嵌入层$Emb(\cdot)$，一个共享的输出头$OutHead(\cdot)$，一个Transformer块$TRM_k(\cdot)$，一个投影矩阵$M_k\in \mathbb{R}^{d\times 2d}$。对于第i个输入词元$t_i$，在第k个预测深度，首先将第k-1深度的第i个token的表示连接$ h_i^{k-1}\in\mathbb{R}^d $与第i+k个token的嵌入$Emb(t_{i+k})\in\mathbb{R}^d$通过线性投影进行组合。
 
-$$ h_{i}^{\prime k}=M_{k}\left[RMSNorm\left(h_{i}^{k - 1}\right); RMSNorm\left(Emb\left(t_{i + k}\right)\right)\right] $$
+$$ h_{i}^{\prime k}=M_{k}\left\[RMSNorm\left(h_{i}^{k - 1}\right); RMSNorm\left(Emb\left(t_{i + k}\right)\right)\right\] $$
 
 > 其中，$h_{k-1}$是一个d维向量，$Emb(t_{i+k})$也是一个d维向量，d表示向量的维度，i和k是整数。这种组合方式可能是为了在不同的预测深度下更好利用输入标记的信息，从而提高预测的准确性。
 
-其中$ [\cdot;\cdot] $表示向量拼接，$RMSNorm(\cdot)$表示根均方根归一化，$ M_k $是一个d×2d的矩阵，表示线性投影。特别地，k=1时，$h_i^{k-1}$表示由主模型得到的表示。请注意，对于每个MTP模块，其嵌入层与主模型共享。$h_i^{'k}$作为第𝑘深度的 Transformer 模块的输入，用于生成当前深度$h_i^{k}$的输出表示：
+其中$ \[\cdot;\cdot\] $表示向量拼接，$RMSNorm(\cdot)$表示根均方根归一化，$ M_k $是一个d×2d的矩阵，表示线性投影。特别地，k=1时，$h_i^{k-1}$表示由主模型得到的表示。请注意，对于每个MTP模块，其嵌入层与主模型共享。$h_i^{'k}$作为第𝑘深度的 Transformer 模块的输入，用于生成当前深度$h_i^{k}$的输出表示：
 
 $$h^k_{1:T;k}=TRM_k(h^{'k}_{1:T-k})$$
 
