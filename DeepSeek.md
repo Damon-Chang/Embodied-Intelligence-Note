@@ -223,11 +223,13 @@ Multi-Token Prediction。受Gloeckle等人（2024）的启发，V3研究并为De
 
 ![我们的多令牌预测（MTP）实施的插图。我们为每个深度的每个令牌的预测保留完整的因果链](<截屏2025-02-12 09.12.45.png>)
 
-**MTP模块**。具体来说，MTP实现使用D个序列模块预测D个额外的词元。第k个MTP模块包括一个共享的的嵌入层$Emb(\cdot)$，一个共享的输出头$OutHead(\cdot)$，一个Transformer块$TRM_k(\cdot)$，一个投影矩阵$M_k\in \mathbb{R}^{d\times 2d}$。对于第i个输入词元$t_i$，在第k个预测深度，首先将第k-1深度的第i个token的表示连接$h_i^{k-1}\in\mathbb{R}^d$与第i+k个token的嵌入$Emb(t_{i+k})\in\mathbb{R}^d$通过线性投影进行组合。
+**MTP模块**。具体来说，MTP实现使用D个序列模块预测D个额外的词元。第k个MTP模块包括一个共享的的嵌入层$Emb(\cdot)$，一个共享的输出头$OutHead(\cdot)$，一个Transformer块$TRM_k(\cdot)$，一个投影矩阵$M_k\in \mathbb{R}^{d\times 2d}$。对于第i个输入词元$t_i$，在第k个预测深度，首先将第k-1深度的第i个token的表示连接$ h_i^{k-1}\in\mathbb{R}^d $与第i+k个token的嵌入$Emb(t_{i+k})\in\mathbb{R}^d$通过线性投影进行组合。
+
 $$ h_{i}^{\prime k}=M_{k}\left[RMSNorm\left(h_{i}^{k - 1}\right); RMSNorm\left(Emb\left(t_{i + k}\right)\right)\right] $$
+
 > 其中，$h_{k-1}$是一个d维向量，$Emb(t_{i+k})$也是一个d维向量，d表示向量的维度，i和k是整数。这种组合方式可能是为了在不同的预测深度下更好利用输入标记的信息，从而提高预测的准确性。
 
-其中$[\cdot;\cdot]$表示向量拼接，$RMSNorm(\cdot)$表示根均方根归一化，$M_k$是一个d×2d的矩阵，表示线性投影。特别地，k=1时，$h_i^{k-1}$表示由主模型得到的表示。请注意，对于每个MTP模块，其嵌入层与主模型共享。$h_i^{'k}$作为第𝑘深度的 Transformer 模块的输入，用于生成当前深度$h_i^{k}$的输出表示：
+其中$ [\cdot;\cdot] $表示向量拼接，$RMSNorm(\cdot)$表示根均方根归一化，$ M_k $是一个d×2d的矩阵，表示线性投影。特别地，k=1时，$h_i^{k-1}$表示由主模型得到的表示。请注意，对于每个MTP模块，其嵌入层与主模型共享。$h_i^{'k}$作为第𝑘深度的 Transformer 模块的输入，用于生成当前深度$h_i^{k}$的输出表示：
 
 $$h^k_{1:T;k}=TRM_k(h^{'k}_{1:T-k})$$
 
